@@ -1,6 +1,5 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-# App created using 
 ## [Create React App](https://github.com/facebook/create-react-app)
 ## [react-map-gl](https://uber.github.io/react-map-gl/#/)
 
