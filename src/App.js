@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import ReactMapGL, { Source, Layer} from 'react-map-gl';
+import ReactMapGL, { Source, Layer } from 'react-map-gl';
 
 const us_states_data = require('./data/us_states.geojson');
 const us_outline_data = require('./data/us_outline.geojson');
@@ -13,7 +13,7 @@ export default class App extends Component {
   state = {
     viewport: {
       width: 1500,
-      height: 650,
+      height: 450,
       latitude: 37.7577,
       longitude: -122.4376,
       zoom: 8,
@@ -22,10 +22,10 @@ export default class App extends Component {
     show2: "none",
     show3: "visible",
     show4: "none",
-    languageInfo: [],
+    languageInfo: [1, 2, 3, 4, 5, 6, 7],
   };
 
-  handleClick(number) {
+  toggleLayers(number) {
     switch (number) {
       case 1:
         if (this.state.show1 === "visible") {
@@ -76,51 +76,48 @@ export default class App extends Component {
     }
   }
 
-  handleLangs(e){
+  handleLangs(e) {
     let state = e.features[0].properties.STATE;
     let county = e.features[0].properties.COUNTY;
     let url = `https://api.census.gov/data/2013/language?get=LAN7,LANLABEL,EST&for=county:${county}&in=state:${state}&key=${process.env.REACT_APP_DATA_KEY}`
-    this.getLanguageInfo(url);
+    this.getLanguageInfo(url)
   }
 
-  getLanguageInfo(url){
-    fetch(url)
-    .then(
-      function(response) {
-        if (response.status !== 200) {
-          console.log('Looks like there was a problem. Status Code: ' +
-            response.status);
-          return;
-        }
-        response.json().then(function(data) {
-          console.log(data) ;
-        });
-      }
-    )
-    .catch(function(err) {
-      console.log('Fetch Error :-S', err);
-    });
-  }
-
-  renderLanguageInfo(){
-    
+  async getLanguageInfo(url) {
+    try {
+      let data = await fetch(url)
+      let parsedData = await data.json()
+      console.log(parsedData)
+      this.setState({
+        languageInfo: parsedData.map((post, i) => (
+          <li key={i} className="list-group-item">{post.join(' ')}</li>
+        ))
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }
 
 
   render() {
     return (
       <div >
+        <div>
+          <ul className="list-group list-group-flush">
+            {this.state.languageInfo}
+          </ul>
+        </div>
         <div style={{ textAlign: "center" }}>
-          <button style={{ height: '10%', width: '10%' }} onClick={() => this.handleClick(2)}>US Border</button>
-          <button style={{ height: '10%', width: '10%' }} onClick={() => this.handleClick(1)}>US States</button>
-          <button style={{ height: '10%', width: '10%' }} onClick={() => this.handleClick(3)}>US Counties</button>
-          <button style={{ height: '10%', width: '12%' }} onClick={() => this.handleClick(4)}>Congressional Districts</button><br />
+          <button style={{ height: '10%', width: '10%' }} onClick={() => this.toggleLayers(2)}>US Border</button>
+          <button style={{ height: '10%', width: '10%' }} onClick={() => this.toggleLayers(1)}>US States</button>
+          <button style={{ height: '10%', width: '10%' }} onClick={() => this.toggleLayers(3)}>US Counties</button>
+          <button style={{ height: '10%', width: '12%' }} onClick={() => this.toggleLayers(4)}>Congressional Districts</button><br />
         </div>
         <ReactMapGL
           {...this.state.viewport}
           onViewportChange={(viewport) => this.setState({ viewport })}
           mapboxApiAccessToken={TOKEN}
-          onClick={(e)=>this.handleLangs(e)}
+          onClick={(e) => this.handleLangs(e)}
         >
           <h2>MapApp for 39DN</h2>
           <Source type="geojson" data={us_states_data}>
@@ -158,11 +155,12 @@ export default class App extends Component {
           <Source type="geojson" data={congress_data}>
             <Layer
               id="congressional"
-              type="line"
+              type="fill"
               paint={{
-                "line-color": "black",
+                "fill-color": "black",
+                "fill-opacity": 0.2,
               }}
-              layout={{ 'visibility': this.state.show4, "line-sort-key": 2 }}
+              layout={{ 'visibility': this.state.show4 }}
             />
           </Source>
         </ReactMapGL>
